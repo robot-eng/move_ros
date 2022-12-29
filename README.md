@@ -27,3 +27,13 @@ moveBindings = {
 <p align="center">
   <img src="image/2.png" />
 </p>
+
+## Skid Steer / Differential Drive
+<p>Here is some math for 2 and 4 wheel differential drive vehicles, 2 wheels and a castor, or skid steer tracked vehicles.</p>
+<p><b>Arc based commands</b></p>
+<p>The basic skid steer equations are:</p>
+
+>velocity_right = w(RADIUS_OF_ARC_TO_DRIVE + WHEEL_BASE/2)
+>
+>velocity_left = w(RADIUS_OF_ARC_TO_DRIVE – WHEEL_BASE/2)
+
