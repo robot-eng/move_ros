@@ -5,17 +5,17 @@ moveBindings = {
         'I':(1,0,0,0),   # Forward
         ',':(-1,0,0,0),  # backward
         '<':(-1,0,0,0),  # backward
-        '.':(-1,-1,0,0), #
-        '>':(-1,-1,0,0), #
-        'j':(0,0,0,1),   # turn left
-        'l':(0,0,0,-1),  # turn right
-        'J':(0,1,0,0),   # side left
-        'L':(0,-1,0,0),  # side right
-        'M':(-1,1,0,0),
-        'm':(-1,1,0,0),
-        'U':(1,1,0,0),
-        'u':(1,1,0,0),
-        'O':(1,-1,0,0),
-        'o':(1,-1,0,0),
+        '.':(-1,-1,0,0), # Diagonal bottom right
+        '>':(-1,-1,0,0), # Diagonal bottom right
+        'j':(0,0,0,1),   # Turn left
+        'l':(0,0,0,-1),  # Turn right
+        'J':(0,1,0,0),   # Side left
+        'L':(0,-1,0,0),  # Side right
+        'M':(-1,1,0,0),  # Diagonal bottom left
+        'm':(-1,1,0,0),  # Diagonal bottom left
+        'U':(1,1,0,0),   # Diagonal top left
+        'u':(1,1,0,0),   # Diagonal top left
+        'O':(1,-1,0,0),  # Diagonal top right
+        'o':(1,-1,0,0),  # Diagonal top right
     }
 ```
