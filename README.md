@@ -97,4 +97,109 @@ One unrelated note is that if you are operating on uneven terrain then doing mec
 >
 >angular.z = ( -wheel_front_left + wheel_front_right – wheel_rear_left + wheel_rear_right) * (WHEEL_RADIUS/(4 * (WHEEL_SEPARATION_WIDTH + WHEEL_SEPARATION_LENGTH)))
 
-<p>Source for mecanum wheel math: href="https://research.ijcaonline.org/volume113/number3/pxc3901586.pdf">here.</a> </p>
+<p>Source for mecanum wheel math: <a href="https://research.ijcaonline.org/volume113/number3/pxc3901586.pdf">here.</a> </p>
+
+## EX 1.
+```c
+void onTwist(const geometry_msgs::Twist &msg)
+{
+  if (connected)
+  {
+    // Cap values at [-1 .. 1]
+    x = max(min(msg.linear.x, 1.0f), -1.0f);
+    y = max(min(msg.linear.y, 1.0f), -1.0f);
+    z = max(min(msg.angular.z, 1.0f), -1.0f);
+    movement = true;
+  }
+  else
+    stop();
+}
+
+void handleMovement()
+{
+  if (!movement || updating)
+    return;
+
+  // Mecanum drive:
+  // ------------------------
+  
+  // Taken and simplified from: http://robotsforroboticists.com/drive-kinematics/
+  float lf = x - y - z * 0.5;
+  float rf = x + y + z * 0.5;
+  float lb = x + y - z * 0.5;
+  float rb = x - y + z * 0.5;
+
+  // Map values to PWM intensities. 
+  // PWMRANGE = full speed, PWM_MIN = the minimal amount of power at which the motors begin moving.
+  uint16_t lfPwm = mapPwm(fabs(lf), PWM_MIN, PWMRANGE);
+  uint16_t rfPwm = mapPwm(fabs(rf), PWM_MIN, PWMRANGE);
+  uint16_t lbPwm = mapPwm(fabs(lb), PWM_MIN, PWMRANGE);
+  uint16_t rbPwm = mapPwm(fabs(rb), PWM_MIN, PWMRANGE);
+
+//  Serial.printf("%f, %f, %f, %f\n", lf, rf, lb, rb);
+//  Serial.printf("---%d, %d, %d, %d\n", lfPwm, rfPwm, lbPwm, rbPwm);
+//  Serial.printf("------%d, %d, %d, %d\n", lfPwm * (lf > 0), lfPwm * (lf < 0), lbPwm * (lb > 0), lbPwm * (lb < 0));
+
+  // Each wheel has a channel for forward and backward movement
+  pwm.writePWM(LF_FORW, lfPwm * (lf > 0));
+  pwm.writePWM(LF_BACK, lfPwm * (lf < 0));
+  pwm.writePWM(LB_FORW, lbPwm * (lb > 0));
+  pwm.writePWM(LB_BACK, lbPwm * (lb < 0));
+  
+  pwm.writePWM(RF_FORW, rfPwm * (rf > 0));
+  pwm.writePWM(RF_BACK, rfPwm * (rf < 0));
+  pwm.writePWM(RB_FORW, rbPwm * (rb > 0));
+  pwm.writePWM(RB_BACK, rbPwm * (rb < 0));
+
+  movement = false;
+}
+```
+## Ex 2.
+
+<p>credit : https://ecam-eurobot.github.io/Tutorials/software/mecanum/mecanum.html</p>
+
+#### $\color[rgb]{1,0,1}ROS$ $\color[rgb]{1,0,1}Twist$
+
+<p>In the ROS navigations stack, all movements are indicated by Twist messages. These messages contain linear and angular velocity components and are often used to express the global movement of the base.</p>
+<p>To control the 4 motors, we need to convert those velocities in angular velocities for each wheel. In our ROS node, we can define the following function:</p>
+
+```c
+def convert(move):
+    x = move.linear.x
+    y = move.linear.y
+    rot = move.angular.z
+
+    front_left = (x - y - rot * WHEEL_GEOMETRY) / WHEEL_RADIUS
+    front_right = (x + y + rot * WHEEL_GEOMETRY) / WHEEL_RADIUS
+    back_left = (x + y - rot * WHEEL_GEOMETRY) / WHEEL_RADIUS
+    back_right = (x - y + rot * WHEEL_GEOMETRY) / WHEEL_RADIUS
+```
+
+<p>We used the inverse kinematic equations presented in the mecanum wheels chapter to convert global base velocity into individual angular velocities.</p>
+
+#### $\color[rgb]{1,0,1}ROS$ $\color[rgb]{1,0,1}node$
+
+<p>Now that we have a function to transform the twist message, let's setup the node to subscribe to Twist messages and publish individual angular velocity messages to specific topics:</p>
+
+```c
+rospy.init_node('mecanum')
+
+# Get parameters about the geometry of the wheels
+WHEEL_SEPARATION_WIDTH = rospy.get_param("/wheel/separation/horizontal")
+WHEEL_SEPARATION_LENGTH = rospy.get_param("/wheel/separation/vertical")
+WHEEL_GEOMETRY = (WHEEL_SEPARATION_WIDTH + WHEEL_SEPARATION_LENGTH) / 2
+WHEEL_RADIUS = rospy.get_param("/wheel/diameter") / 2
+
+
+pub_mfl = rospy.Publisher('motor/front/left', Float32, queue_size=1)
+pub_mfr = rospy.Publisher('motor/front/right', Float32, queue_size=1)
+pub_mbl = rospy.Publisher('motor/rear/left', Float32, queue_size=1)
+pub_mbr = rospy.Publisher('motor/rear/right', Float32, queue_size=1)
+
+sub = rospy.Subscriber('cmd_vel', Twist, convert)
+rospy.spin()
+```
+
+<p>In this extract, we initialize the node, get some parameters from ROS' parameter server, define a publisher for each mecanum wheel and subscribe to the cmd_vel topic where Twist messages are send to. In the subscription, we provide our convertion function as a callback. This means that whenever a twist message is published on the topic, our function will be called with the twist message as argument.</p>
+<p>The only thing left to do is to adapt our function to pusblish the correct values to the corresponding topics.</p>
+<p>The code can be found in the Eurobot-2018 repository in the mecanum package</p>
