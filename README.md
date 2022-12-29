@@ -19,4 +19,6 @@ moveBindings = {
         'o':(1,-1,0,0),  # Diagonal top right
     }
 ```
-
+<p align="center">
+  <img src="image/1.png" />
+</p>
