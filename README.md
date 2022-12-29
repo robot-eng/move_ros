@@ -22,3 +22,6 @@ moveBindings = {
 <p align="center">
   <img src="image/1.png" />
 </p>
+<p align="center">
+  <img src="image/2.png" />
+</p>
